@@ -1,6 +1,6 @@
 package redfive;
 
-public class pai {
+public class Card {
 	String id;
 	int val;
 	public String getId() {

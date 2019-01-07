@@ -1,27 +1,22 @@
 package redfive;
 
-import java.awt.*;
-import java.awt.List;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-import javax.naming.InitialContext;
-import javax.swing.JApplet;
-
-public class Client implements Runnable, Constants{
+public class RedFiveClient implements Runnable, RedFiveConstants {
 	private boolean myTurn = false;
 	private DataInputStream fromServer;
 	private DataOutputStream toServer;
 	private boolean continueToPlay = true;
 	private String host = "localhost";
-	private ArrayList<pai> myPai = new ArrayList<pai>();
+	private ArrayList<Card> myCard = new ArrayList<Card>();
 	private String state = "";
 	private String first1,first2;
 	private int paiValue = 0;
 	private int x,y;
 	public static void main(String args[]) {
-		new Client().connectToServer();
+		new RedFiveClient().connectToServer();
 	}
 	private void connectToServer(){
 		try {
@@ -42,24 +37,24 @@ public class Client implements Runnable, Constants{
 			int player = fromServer.readInt();
 			String myplayer = "";
 			if (player == PLAYER1) {
-				myplayer = "玩家1";
+				myplayer = "庄家";
 			}
 			else if (player == PLAYER2) {
-				myplayer = "玩家2";
+				myplayer = "闲家1";
 			}
 			else if (player == PLAYER3) {
-				myplayer = "玩家3";
+				myplayer = "闲家2";
 			}
 			else if (player == PLAYER4) {
-				myplayer = "玩家4";
+				myplayer = "闲家3";
 			}
-			System.out.println("成功加入游戏，你是:"+myplayer+"! 请记住!");
-			myPai.clear();
+			System.out.println("成功加入游戏，你是:"+myplayer+"! ");
+			myCard.clear();
 			for(int i=0;i<25;i++) {
-				pai x = new pai();
+				Card x = new Card();
 				x.setId(fromServer.readUTF());
 				x.setVal(fromServer.readInt());
-				myPai.add(x);
+				myCard.add(x);
 			}
 			prMypai();
 			while (continueToPlay) {
@@ -75,6 +70,7 @@ public class Client implements Runnable, Constants{
 				System.out.println("本轮出牌情况: "+state);
 				String logpoint = fromServer.readUTF();
 				System.out.println(logpoint);
+//				System.out.println(logpoint);
 				receiveInfoFromServer();
 			}
 		} catch (Exception ex) {
@@ -87,50 +83,71 @@ public class Client implements Runnable, Constants{
 //			int x = in.nextInt();
 //			int y = in.nextInt();
 			x = 0; y = 0;
-			if(x == 0 && y == 0) {
-//				autoOut();
-//				x = this.x;
-//				y = this.y;
-				x = in.nextInt();
-				y = in.nextInt();
+			autoOut();
+//			x = in.nextInt();
+//			y = in.nextInt();
+
+			if (y == 0){
+				System.out.println(myCard.get(x-1).getId());
 			}
 			else {
-				if(x > myPai.size() || y > myPai.size()) {
+				System.out.println(myCard.get(x-1).getId()+" "+ myCard.get(y-1).getId());
+			}
+
+				if(x > myCard.size() || y > myCard.size()) {
 					System.out.println("输入数字超出手牌大小");
-					continue;
+//					continue;
 				}
-				if(x < y || x == 0) {
+				else if(x < y || x == 0) {
 					System.out.println("输入不合法(大小顺序不对或者不出牌)");
-					continue;
+//					continue;
 				}
-				if(x == y) {
+				else if(x == y) {
 					System.out.println("不能打两张相同的牌");
-					continue;
+//					continue;
 				}
-				if(state.equals("") && y!=0 && myPai.get(x-1).getVal() != myPai.get(y-1).getVal()) {
+				else if(state.equals("") && y!=0 && myCard.get(x-1).getVal() != myCard.get(y-1).getVal()) {
 					System.out.println("第一个出对子需要花色和数字均相同的牌");
-					continue;
+//					continue;
 				}
-				if(!state.equals("") && !checkAfter(x, y)){
-					continue;
+				else if(!state.equals("")){
+//					continue;
+					if (checkAfter(x, y)){
+						try {
+							toServer.writeUTF(myCard.get(x-1).getId());
+							toServer.writeInt(myCard.get(x-1).getVal());
+							if(y != 0) toServer.writeUTF(myCard.get(y-1).getId());
+							else toServer.writeUTF("");
+
+							myCard.remove(x-1);
+							if(y != 0) myCard.remove(y-1);
+							toServer.writeInt(myCard.size());
+
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						break;
+					}
 				}
-			}
-			try {
-				System.out.println(x+" "+y);
-				toServer.writeUTF(myPai.get(x-1).getId());
-				toServer.writeInt(myPai.get(x-1).getVal());
-				if(y != 0) toServer.writeUTF(myPai.get(y-1).getId());
-				else toServer.writeUTF("");
-				
-				myPai.remove(x-1);
-				if(y != 0) myPai.remove(y-1);
-				toServer.writeInt(myPai.size());
-				
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			break;
+				else {
+					try {
+						toServer.writeUTF(myCard.get(x-1).getId());
+						toServer.writeInt(myCard.get(x-1).getVal());
+						if(y != 0) toServer.writeUTF(myCard.get(y-1).getId());
+						else toServer.writeUTF("");
+
+						myCard.remove(x-1);
+						if(y != 0) myCard.remove(y-1);
+						toServer.writeInt(myCard.size());
+
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					break;
+				}
+
 		}
 	}
 	private void waitForPlayerAction() throws InterruptedException {
@@ -139,25 +156,27 @@ public class Client implements Runnable, Constants{
 	private boolean checkAfter(int x, int y) {
 		String my1, my2;
 		if(first2.equals("")) {
-			my1 = myPai.get(x-1).getId();
+			my1 = myCard.get(x-1).getId();
 			if(my1.substring(0, 2).equals(first1.substring(0, 2))) return true;
 			else {
 				if(!first1.substring(0, 2).equals("大王") && !first1.substring(0, 2).equals("小王") && !first1.equals("红桃5")) {
-					for(int i=0;i<myPai.size();i++) {
-						if(myPai.get(i).getId().substring(0, 2).equals(first1.substring(0, 2))) {
+					for(int i = 0; i< myCard.size(); i++) {
+						if(myCard.get(i).getId().substring(0, 2).equals(first1.substring(0, 2))) {
 							System.out.println("必须出相同花色的单牌");
 							return false;
 						}
 					}
+
 				}
 				if(paiValue < 0) {
-					if(myPai.get(x-1).getVal() < 0) return true;
-					for(int i=0;i<myPai.size();i++) {
-						if(myPai.get(i).getVal() < 0) {
+					if(myCard.get(x-1).getVal() < 0) return true;
+					for(int i = 0; i< myCard.size(); i++) {
+						if(myCard.get(i).getVal() < 0) {
 							System.out.println("主牌必须用主牌接");
 							return false;
 						}
 					}
+
 				}
 				return true;
 			}
@@ -169,10 +188,12 @@ public class Client implements Runnable, Constants{
 			}
 			if(!first1.substring(0, 2).equals("大王") && !first1.substring(0, 2).equals("小王") && !first1.equals("红桃5")) {
 				int num1 = 0, num2 = 0;
-				if(myPai.get(x-1).getId().substring(0, 2).equals(first1.substring(0, 2)) && myPai.get(x-1).getVal() >= -600) num1 ++;
-				if(myPai.get(y-1).getId().substring(0, 2).equals(first1.substring(0, 2)) && myPai.get(y-1).getVal() >= -600) num1 ++;
-				for(int i=0;i<myPai.size();i++) {
-					if(myPai.get(i).getId().substring(0, 2).equals(first1.substring(0, 2))) {
+//				if(myCard.get(x-1).getId().substring(0, 2).equals(first1.substring(0, 2)) && myCard.get(x-1).getVal() >= -600) num1 ++;
+//				if(myCard.get(y-1).getId().substring(0, 2).equals(first1.substring(0, 2)) && myCard.get(y-1).getVal() >= -600) num1 ++;
+				if(myCard.get(x-1).getId().substring(0, 2).equals(first1.substring(0, 2))) num1 ++;
+				if(myCard.get(y-1).getId().substring(0, 2).equals(first1.substring(0, 2))) num1 ++;
+				for(int i = 0; i< myCard.size(); i++) {
+					if(myCard.get(i).getId().substring(0, 2).equals(first1.substring(0, 2))) {
 						num2 ++;
 					}
 					if(num2 == 2) break;
@@ -181,13 +202,14 @@ public class Client implements Runnable, Constants{
 					System.out.println("必须出相同花色的牌");
 					return false;
 				}
+
 			}
 			if(paiValue < 0) {
 				int num1 = 0, num2 = 0;
-				if(myPai.get(x-1).getVal() < 0) num1 ++;
-				if(myPai.get(y-1).getVal() < 0) num1 ++;
-				for(int i=0;i<myPai.size();i++) {
-					if(myPai.get(i).getVal() < 0) {
+				if(myCard.get(x-1).getVal() < 0) num1 ++;
+				if(myCard.get(y-1).getVal() < 0) num1 ++;
+				for(int i = 0; i< myCard.size(); i++) {
+					if(myCard.get(i).getVal() < 0) {
 						num2 ++;
 					}
 					if(num2 == 2) break;
@@ -208,8 +230,8 @@ public class Client implements Runnable, Constants{
 		}
 		if(first2.equals("")) {
 			if(!first1.substring(0, 2).equals("大王") && !first1.substring(0, 2).equals("小王") && !first1.equals("红桃5")) {
-				for(int i=0;i<myPai.size();i++) {
-					if(myPai.get(i).getId().substring(0, 2).equals(first1.substring(0, 2))) {
+				for(int i = 0; i< myCard.size(); i++) {
+					if(myCard.get(i).getId().substring(0, 2).equals(first1.substring(0, 2))) {
 						x = i+1;
 						y = 0;
 						return;
@@ -217,23 +239,23 @@ public class Client implements Runnable, Constants{
 				}
 			}
 			if(paiValue < 0) {
-				for(int i=0;i<myPai.size();i++) {
-					if(myPai.get(i).getVal() < 0) {
+				for(int i = 0; i< myCard.size(); i++) {
+					if(myCard.get(i).getVal() < 0) {
 						x = i+1;
 						y = 0;
 						return;
 					}
 				}
 			}
-			x = myPai.size();
+			x = myCard.size();
 			y = 0;
 			return;
 		}
 		else {
 			ArrayList<Integer> out = new ArrayList<Integer>();
 			if(!first1.substring(0, 2).equals("大王") && !first1.substring(0, 2).equals("小王") && !first1.equals("红桃5")) {
-				for(int i=0;i<myPai.size();i++) {
-					if(myPai.get(i).getId().substring(0, 2).equals(first1.substring(0, 2))) {
+				for(int i = 0; i< myCard.size(); i++) {
+					if(myCard.get(i).getId().substring(0, 2).equals(first1.substring(0, 2))) {
 						out.add(i+1);
 					}
 					if(out.size() >= 2) {
@@ -244,8 +266,8 @@ public class Client implements Runnable, Constants{
 				}
 			}
 			if(paiValue < 0) {
-				for(int i=myPai.size()-1;i>=0;i--) {
-					if(myPai.get(i).getVal() < 0) {
+				for(int i = myCard.size()-1; i>=0; i--) {
+					if(myCard.get(i).getVal() < 0) {
 						out.add(i+1);
 					}
 					if(out.size() >= 2) {
@@ -256,10 +278,10 @@ public class Client implements Runnable, Constants{
 				}
 			}
 			else {
-				if(out.size() == 0) y = myPai.size();
+				if(out.size() == 0) y = myCard.size();
 				else y = out.get(0);
-				if(out.size() == 0) x = myPai.size() - 1;
-				else if(out.size() == 1) x = myPai.size();
+				if(out.size() == 0) x = myCard.size() - 1;
+				else if(out.size() == 1) x = myCard.size();
 				else x = out.get(1);
 				return;
 			}
@@ -269,32 +291,32 @@ public class Client implements Runnable, Constants{
 		int status = fromServer.readInt();
 		if (status == PLAYER1_WON) {
 			continueToPlay = false;
-			System.out.println("\n比赛结束,玩家1胜利");
+			System.out.println("\n比赛结束,庄家胜利");
 		}
 		else if (status == PLAYER2_WON) {
 			continueToPlay = false;
-			System.out.println("\n比赛结束,玩家2胜利");
+			System.out.println("\n比赛结束,闲家1胜利");
 		}
 		else if (status == PLAYER3_WON) {
 			continueToPlay = false;
-			System.out.println("\n比赛结束,玩家3胜利");
+			System.out.println("\n比赛结束,闲家2胜利");
 		}
 		else if (status == PLAYER3_WON) {
 			continueToPlay = false;
-			System.out.println("\n比赛结束,玩家4胜利");
+			System.out.println("\n比赛结束,闲家3胜利");
 		}
 		else if (status == DRAW) {
 			continueToPlay = false;
 			System.out.println("\n比赛结束,平局");
 		}
 		else {
-			System.out.print("\n你的回合：");
+			System.out.print("\n等待中。。。");
 		}
 	}
 	private void prMypai() {
-		System.out.print("当前手牌: ");
-		for(int i=0;i<myPai.size();i++) {
-			System.out.print(myPai.get(i).id+" ");
+		System.out.print("你的回合：\n当前手牌: ");
+		for(int i = 0; i< myCard.size(); i++) {
+			System.out.print(myCard.get(i).id+" ");
 		}
 		System.out.println();
 	}

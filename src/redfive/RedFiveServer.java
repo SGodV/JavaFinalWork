@@ -11,14 +11,11 @@ import java.io.*;
 import java.net.*;
 import java.util.Date;
 
-public class Server extends Application implements Constants {
-	int sessionNo = 1;
-
+public class RedFiveServer extends Application implements RedFiveConstants {
+	private int sessionNo = 1;
 	@Override // Override the start method in the Application class
 	public void start(Stage primaryStage) {
-		TextArea taLog = new TextArea();
-
-		// Create a scene and place it in the stage
+		TextArea taLog = new TextArea();// Create a scene and place it in the stage
 		Scene scene = new Scene(new ScrollPane(taLog), 450, 200);
 		primaryStage.setTitle("RedFiveServer"); // Set the stage title
 		primaryStage.setScene(scene); // Place the scene in the stage
@@ -32,7 +29,7 @@ public class Server extends Application implements Constants {
 					@Override
 					public void run() {
 						taLog.appendText(new Date() +
-								": Server started at socket 8000\n");
+								": RedFiveServer started at socket 8000\n");
 					}
 				});
 
@@ -65,7 +62,7 @@ public class Server extends Application implements Constants {
 								player2.getInetAddress().getHostAddress() + '\n');
 					});
 
-					// Notify that the player is Player 3
+					// Notify that the player is Player 2
 					new DataOutputStream(
 							player2.getOutputStream()).writeInt(PLAYER2);
 
@@ -102,7 +99,6 @@ public class Server extends Application implements Constants {
 							taLog.appendText(new Date() +
 									": Start a thread for session " + sessionNo++ + '\n'));
 
-					// Launch a new thread for this session of two players
 					new Thread(new HandleASession(player1, player2, player3, player4)).start();
 				}
 			} catch (IOException ex) {
@@ -111,12 +107,13 @@ public class Server extends Application implements Constants {
 		}).start();
 	}
 
-	class HandleASession implements Runnable, Constants {
+	class HandleASession implements Runnable, RedFiveConstants {
 		private Socket[] player = new Socket[5];
 		//牌
 		private boolean continueToPlay = true;
 		private String state = "本轮出牌情况:\n";
-		private pai[][] playPai = new pai[4][30];
+		private Card[][] playCard = new Card[4][30];
+
 
 		public HandleASession(Socket player1, Socket player2, Socket player3, Socket player4) {
 			this.player[1] = player1;
@@ -126,10 +123,10 @@ public class Server extends Application implements Constants {
 			Main.main(null);
 			for (int i = 0; i < 4; i++) {
 				for (int j = 0; j < 25; j++) {
-					playPai[i][j] = Main.play[i][j];
+					playCard[i][j] = Main.play[i][j];
 					try {
-						new DataOutputStream(player[i + 1].getOutputStream()).writeUTF(playPai[i][j].getId());
-						new DataOutputStream(player[i + 1].getOutputStream()).writeInt(playPai[i][j].getVal());
+						new DataOutputStream(player[i + 1].getOutputStream()).writeUTF(playCard[i][j].getId());
+						new DataOutputStream(player[i + 1].getOutputStream()).writeInt(playCard[i][j].getVal());
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -198,15 +195,17 @@ public class Server extends Application implements Constants {
 //					toPlayer[4].writeInt(CONTINUE);
 						winner = 4;
 					}
-					String logPoint = "当前比分为: 玩家1:" + point[1] + " |玩家2:" + point[2] + " |玩家3:" + point[3] + " |玩家4:" + point[4];
+					String logPoint = "当前比分为: 庄家 :" + point[1] + " |闲家1:" + point[2] + " |闲家2:" + point[3] + " |闲家3:" + point[4];
 					logPoint += "\n剩余牌数为:" + painum[1];
 					for (int i = 1; i <= 4; i++) {
 						toPlayer[i].writeUTF(state);
 						toPlayer[i].writeUTF(logPoint);
 					}
 					state = "";
+
 					System.out.println(logPoint);
 					System.out.println("本轮胜者:" + winner);
+					System.out.println("/n新回合:");
 					now = winner;
 
 					if (painum[1] == 0 && painum[2] == 0 && painum[3] == 0 && painum[4] == 0) {
@@ -271,7 +270,7 @@ public class Server extends Application implements Constants {
 			int sum = 0;
 			for (int i = 1; i <= 4; i++) {
 				for (int j = 1; j <= 2; j++) {
-					if (paiout[i][j].equals("") || paiout[i][j].equals("大王   ") || paiout[i][j].equals("小王   ")) ;
+					if (paiout[i][j].equals("") || paiout[i][j].equals("大王 ") || paiout[i][j].equals("小王 ")) ;
 					else {
 						int len = paiout[i][j].length();
 						char p = paiout[i][j].charAt(len - 1);

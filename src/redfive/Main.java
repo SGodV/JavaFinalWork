@@ -1,20 +1,11 @@
 package redfive;
 
 import java.util.*;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 
 
 public class Main {
 	public static int huase;
-	static pai[][] play = new pai[4][30];
+	static Card[][] play = new Card[4][30];
 	public static void main(String[] args) {
 		Comparator cmp = new cmp1();
 //		new Main().pr2(a);
@@ -29,10 +20,10 @@ public class Main {
 		if(huase == 3) x = "红桃";
 		System.out.println("主花色为:"+x);
 		
-		pai[] a = new Main().init();
+		Card[] a = new Main().init();
 		a = new Main().xipai(a);
 		play = new Main().fapai(a);
-		Arrays.sort(a,0,108,cmp);
+		Arrays.sort(a,0,108, cmp);
 		
 //		try {
 //			DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream("D:/zzzzzzz/main.txt")));
@@ -119,12 +110,12 @@ public class Main {
 //			e.printStackTrace();
 //		}
 	}
-	public pai[] init() {
-		pai[] a = new pai[200];
-		for(int i = 0;i < 2;i ++) a[i] = new pai();
+	public Card[] init() {
+		Card[] a = new Card[200];
+		for(int i = 0;i < 2;i ++) a[i] = new Card();
 		int i = 0,val = 0;
-		a[i++].setId("大王  ");a[0].setVal(-1999);
-		a[i++].setId("小王  ");a[1].setVal(-1998);
+		a[i++].setId("大王 ");a[0].setVal(-1999);
+		a[i++].setId("小王 ");a[1].setVal(-1998);
 		
 		
 		int color = 14;
@@ -138,29 +129,29 @@ public class Main {
 			}
 			else x+=color+"";
 			
-			a[i] = new pai();
+			a[i] = new Card();
 			a[i].setId("黑桃"+x);
 			a[i].setVal(val);
 			i++;val++;
 			
-			a[i] = new pai();
+			a[i] = new Card();
 			a[i].setId("草花"+x);
 			a[i].setVal(val);
 			i++;val++;
 			
-			a[i] = new pai();
+			a[i] = new Card();
 			a[i].setId("方块"+x);
 			a[i].setVal(val);
 			i++;val++;
 			
 			if(color != 5) {
-				a[i] = new pai();
+				a[i] = new Card();
 				a[i].setId("红桃"+x);
 				a[i].setVal(val);
 				i++;val++;
 			}
 			else {
-				a[i] = new pai();
+				a[i] = new Card();
 				a[i].setId("红桃"+x);
 				a[i].setVal(-2000);
 				i++;val++;
@@ -194,7 +185,7 @@ public class Main {
 //		System.out.println(i);
 		return a;
 	}
-	public pai[] xipai(pai[] a) {
+	public Card[] xipai(Card[] a) {
 		int i = 0;
 		while(i < 108*2) {
 			Random p = new Random();
@@ -208,7 +199,7 @@ public class Main {
 			}
 //			System.out.println(x+" "+y);
 //			System.out.println(a[x].getId()+" "+a[y].getId());
-			pai tmp = a[x];
+			Card tmp = a[x];
 			a[x] = a[y];
 			a[y] = tmp;
 			i++;
@@ -216,17 +207,17 @@ public class Main {
 //		for(i=0;i<108;i++) System.out.print(a[i].getId()+" ");
 		return a;
 	}
-	public pai[][] fapai(pai[] a) {
-		pai[][] play = new pai[4][30];
+	public Card[][] fapai(Card[] a) {
+		Card[][] play = new Card[4][30];
 		for(int i=0;i<100;i++) {
 			int k = i/4;
-			play[i%4][k] = new pai();
+			play[i%4][k] = new Card();
 //			System.out.print(a[i].getId()+" ");
 			play[i%4][k] = a[i];
 		}
 		return play;
 	}
-	public void pr(pai[][] play) {
+	public void pr(Card[][] play) {
 		for(int i=0;i<4;i++) {
 			for(int j=0;j<27;j++) {
 				System.out.print(play[i][j].getId()+" ");
@@ -234,15 +225,15 @@ public class Main {
 			System.out.println();
 		}
 	}
-	public void pr2(pai[] a) {
+	public void pr2(Card[] a) {
 		for(int i=0;i<108;i++) {
 			System.out.print(a[i].getId()+" ");
 		}
 		System.out.println(0);
 	}
 }
-class cmp1 implements Comparator<pai> {
-    public int compare (pai a,pai b) {
+class cmp1 implements Comparator<Card> {
+    public int compare (Card a, Card b) {
 //		if(a.getVal()>b.getVal()) return 1;
 //		else if(a.getVal()==b.getVal()) return 0;
 //		else return -1;
